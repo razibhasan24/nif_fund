@@ -7,59 +7,38 @@ use Illuminate\Http\Request;
 
 class FundController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        return Fund::with('member.user')->latest()->get();
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $data = $request->validate([
+            'member_id' => 'required|exists:members,id',
+            'amount' => 'required|numeric|min:0',
+            'month' => 'required|date',
+        ]);
+
+        $fund = Fund::create($data);
+        return response()->json(['message' => 'Fund added successfully', 'data' => $fund]);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Fund $fund)
+    public function show($id)
     {
-        //
+        return Fund::with('member.user')->findOrFail($id);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Fund $fund)
+    public function update(Request $request, $id)
     {
-        //
+        $fund = Fund::findOrFail($id);
+        $fund->update($request->all());
+        return response()->json(['message' => 'Fund updated', 'data' => $fund]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Fund $fund)
+    public function destroy($id)
     {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Fund $fund)
-    {
-        //
+        Fund::findOrFail($id)->delete();
+        return response()->json(['message' => 'Fund deleted successfully']);
     }
 }

@@ -3,63 +3,40 @@
 namespace App\Http\Controllers;
 
 use App\Models\Installment;
+use App\Models\Loan;
 use Illuminate\Http\Request;
 
 class InstallmentController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        return Installment::with('loan.member.user')->latest()->get();
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $data = $request->validate([
+            'loan_id' => 'required|exists:loans,id',
+            'amount' => 'required|numeric|min:0',
+            'payment_date' => 'required|date',
+        ]);
+
+        $installment = Installment::create($data);
+
+        // Loan update
+        $loan = Loan::find($request->loan_id);
+        $loan->paid_amount += $request->amount;
+        if ($loan->paid_amount >= $loan->amount) {
+            $loan->status = 'paid';
+        }
+        $loan->save();
+
+        return response()->json(['message' => 'Installment added', 'data' => $installment]);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Installment $installment)
+    public function destroy($id)
     {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Installment $installment)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Installment $installment)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Installment $installment)
-    {
-        //
+        Installment::findOrFail($id)->delete();
+        return response()->json(['message' => 'Installment deleted']);
     }
 }

@@ -7,59 +7,50 @@ use Illuminate\Http\Request;
 
 class LoanRequestController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        return LoanRequest::with('member.user')->latest()->get();
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $data = $request->validate([
+            'member_id' => 'required|exists:members,id',
+            'amount' => 'required|numeric|min:1000',
+            'reason' => 'nullable|string',
+        ]);
+
+        $loanRequest = LoanRequest::create($data);
+        return response()->json(['message' => 'Loan request submitted', 'data' => $loanRequest]);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(LoanRequest $loanRequest)
+    public function approve($id)
     {
-        //
+        $loanRequest = LoanRequest::findOrFail($id);
+        $loanRequest->update(['status' => 'approved']);
+
+        // Loan তৈরি করা হচ্ছে
+        \App\Models\Loan::create([
+            'member_id' => $loanRequest->member_id,
+            'amount' => $loanRequest->amount,
+            'installments' => 6, // Default 6 month
+            'paid_amount' => 0,
+            'status' => 'running',
+        ]);
+
+        return response()->json(['message' => 'Loan approved and created']);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(LoanRequest $loanRequest)
+    public function reject($id)
     {
-        //
+        $loanRequest = LoanRequest::findOrFail($id);
+        $loanRequest->update(['status' => 'rejected']);
+        return response()->json(['message' => 'Loan request rejected']);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, LoanRequest $loanRequest)
+    public function destroy($id)
     {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(LoanRequest $loanRequest)
-    {
-        //
+        LoanRequest::findOrFail($id)->delete();
+        return response()->json(['message' => 'Loan request deleted']);
     }
 }

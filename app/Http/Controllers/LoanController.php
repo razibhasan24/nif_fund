@@ -7,59 +7,26 @@ use Illuminate\Http\Request;
 
 class LoanController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        return Loan::with('member.user', 'installments')->latest()->get();
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function show($id)
     {
-        //
+        return Loan::with('member.user', 'installments')->findOrFail($id);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function update(Request $request, $id)
     {
-        //
+        $loan = Loan::findOrFail($id);
+        $loan->update($request->only('status', 'paid_amount'));
+        return response()->json(['message' => 'Loan updated', 'data' => $loan]);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Loan $loan)
+    public function destroy($id)
     {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Loan $loan)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Loan $loan)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Loan $loan)
-    {
-        //
+        Loan::findOrFail($id)->delete();
+        return response()->json(['message' => 'Loan deleted successfully']);
     }
 }
