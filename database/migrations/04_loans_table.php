@@ -17,7 +17,7 @@ return new class extends Migration
     $table->decimal('amount', 10, 2);
     $table->integer('installments');
     $table->decimal('paid_amount', 10, 2)->default(0);
-    $table->enum('status', ['running', 'paid', 'default'])->default('running');
+    $table->enum('status', ['pending', 'active', 'completed'])->default('pending');
     $table->timestamps();
 });
 

@@ -2,28 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Fund;
-use App\Models\Loan;
-use App\Models\Member;
+use Illuminate\Http\Request;
+use App\Models\Payment;
+use App\Models\User;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $totalFund = Fund::sum('amount');
-        $totalLoan = Loan::sum('amount');
-        $totalPaid = Loan::sum('paid_amount');
-        $balance = $totalFund - ($totalLoan - $totalPaid);
-        $activeLoans = Loan::where('status', 'running')->count();
-        $members = Member::count();
+        // মোট Paid amount
+        $totalPaid = Payment::where('status', 'paid')->sum('amount');
 
-        return response()->json([
-            'total_fund' => $totalFund,
-            'total_loan' => $totalLoan,
-            'total_paid' => $totalPaid,
-            'available_balance' => $balance,
-            'active_loans' => $activeLoans,
-            'total_members' => $members,
-        ]);
+        // মোট Pending amount
+        $totalPending = Payment::where('status', 'pending')->sum('amount');
+
+        // মোট user
+        $totalUsers = User::count();
+
+        // Blade template এ পাঠানো
+        return view('dashboard.index', compact('totalPaid', 'totalPending', 'totalUsers'));
     }
 }
