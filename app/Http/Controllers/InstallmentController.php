@@ -8,11 +8,14 @@ use Illuminate\Http\Request;
 
 class InstallmentController extends Controller
 {
+    // List all installments (paginated)
     public function index()
     {
-        return Installment::with('loan.member.user')->latest()->get();
+        $installments = Installment::with('loan.member.user')->latest()->paginate(30);
+        return view('installments.index', compact('installments'));
     }
 
+    // Store a new installment and update loan status
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -23,20 +26,28 @@ class InstallmentController extends Controller
 
         $installment = Installment::create($data);
 
-        // Loan update
-        $loan = Loan::find($request->loan_id);
-        $loan->paid_amount += $request->amount;
-        if ($loan->paid_amount >= $loan->amount) {
-            $loan->status = 'paid';
-        }
+        // Update loan's paid amount and status
+        $loan = Loan::find($data['loan_id']);
+        $loan->paid_amount = ($loan->paid_amount ?? 0) + $data['amount'];
+        $loan->status = $loan->paid_amount >= $loan->amount ? 'paid' : 'running';
         $loan->save();
 
-        return response()->json(['message' => 'Installment added', 'data' => $installment]);
+        return back()->with('success', 'Installment recorded successfully.');
     }
 
+    // Delete an installment and adjust loan
     public function destroy($id)
     {
-        Installment::findOrFail($id)->delete();
-        return response()->json(['message' => 'Installment deleted']);
+        $installment = Installment::findOrFail($id);
+        $loan = $installment->loan;
+
+        // Adjust loan paid amount & status
+        $loan->paid_amount = max(0, ($loan->paid_amount - $installment->amount));
+        $loan->status = $loan->paid_amount < $loan->amount ? 'running' : $loan->status;
+        $loan->save();
+
+        $installment->delete();
+
+        return back()->with('success', 'Installment deleted successfully.');
     }
 }

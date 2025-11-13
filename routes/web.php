@@ -1,25 +1,20 @@
 <?php
 
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
-// Route::get('/', function () {
-//     return view('welcome');
-// });
+Route::get('/', function () {
+    return view('welcome');
+});
 
-use App\Http\Controllers\{
-    DashboardController,
-    FundController,
-    LoanRequestController,
-    LoanController,
-    InstallmentController
-};
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::get('/', [DashboardController::class,'index'])->name('dashboard');
-Route::resource('funds', FundController::class);
-Route::resource('loans', LoanController::class);
-Route::resource('installments', InstallmentController::class);
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
 
-// Loan Requests
-Route::get('loan-requests',[LoanRequestController::class,'index'])->name('loan-requests.index');
-Route::post('loan-requests/{id}/approve',[LoanRequestController::class,'approve'])->name('loan-requests.approve');
-Route::post('loan-requests/{id}/reject',[LoanRequestController::class,'reject'])->name('loan-requests.reject');
+require __DIR__.'/auth.php';

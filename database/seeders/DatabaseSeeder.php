@@ -72,4 +72,5 @@ class DatabaseSeeder extends Seeder
 
         $this->command->info('✅ Dummy data successfully seeded!');
     }
+
 }
